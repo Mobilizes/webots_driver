@@ -1,0 +1,6 @@
+<?xml version="1.0" ?>
+<robot name="ichiro">
+    <webots>
+        <plugin type="webots_driver::WebotsDriver" />
+    </webots>
+</robot>
