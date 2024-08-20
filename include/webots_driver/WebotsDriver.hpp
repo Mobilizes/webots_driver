@@ -8,6 +8,8 @@
 #include <webots_ros2_driver/PluginInterface.hpp>
 #include <webots_ros2_driver/WebotsNode.hpp>
 
+#include "kansei_interfaces/msg/status.hpp"
+#include "keisan/keisan.hpp"
 #include "tachimawari/joint/model/joint.hpp"
 #include "tachimawari_interfaces/msg/current_joints.hpp"
 #include "tachimawari_interfaces/msg/joint.hpp"
@@ -15,6 +17,7 @@
 namespace webots_driver {
 class WebotsDriver : public webots_ros2_driver::PluginInterface {
 public:
+  using MeasurementStatus = kansei_interfaces::msg::Status;
   using CurrentJoints = tachimawari_interfaces::msg::CurrentJoints;
 
   void step() override;
@@ -22,10 +25,14 @@ public:
             std::unordered_map<std::string, std::string> &parameters) override;
   
 private:
-  void currentJointsCallback(const CurrentJoints::SharedPtr msg);
   void adjustInit(double & position, const uint8_t & id);
+  void currentJointsCallback(const CurrentJoints::SharedPtr msg);
+  void measurementStatusCallback(const MeasurementStatus::SharedPtr msg);
 
   rclcpp::Subscription<CurrentJoints>::SharedPtr current_joints_subscription;
+  rclcpp::Subscription<MeasurementStatus>::SharedPtr measurement_status_subscription;
+
+  keisan::Euler<double> orientation;
 
   std::vector<tachimawari::joint::Joint> joints;
   std::vector<double> jointsOffset;

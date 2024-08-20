@@ -7,6 +7,7 @@
 #include <webots/Robot.hpp>
 
 #include "jitsuyo/cli.hpp"
+#include "kansei_interfaces/msg/status.hpp"
 #include "keisan/keisan.hpp"
 #include "tachimawari/joint/model/joint.hpp"
 #include "tachimawari_interfaces/msg/current_joints.hpp"
@@ -66,6 +67,15 @@ void WebotsDriver::init(
   current_joints_subscription = node->create_subscription<CurrentJoints>(
     "/joint/current_joints", rclcpp::SensorDataQoS().reliable(),
     std::bind(&WebotsDriver::currentJointsCallback, this, std::placeholders::_1));
+
+  measurement_status_subscription = node->create_subscription<MeasurementStatus>(
+    "/measurement/status", rclcpp::SensorDataQoS().reliable(),
+    std::bind(&WebotsDriver::measurementStatusCallback, this, std::placeholders::_1));
+}
+
+void WebotsDriver::adjustInit(double & position, const uint8_t & id) {
+  position += jointsOffset[id - 1];
+  position = keisan::clamp(position, jointsLowerLimit[id - 1], jointsUpperLimit[id - 1]);
 }
 
 void WebotsDriver::currentJointsCallback(const CurrentJoints::SharedPtr msg) {
@@ -74,9 +84,12 @@ void WebotsDriver::currentJointsCallback(const CurrentJoints::SharedPtr msg) {
   }
 }
 
-void WebotsDriver::adjustInit(double & position, const uint8_t & id) {
-  position += jointsOffset[id - 1];
-  position = keisan::clamp(position, jointsLowerLimit[id - 1], jointsUpperLimit[id - 1]);
+void WebotsDriver::measurementStatusCallback(const MeasurementStatus::SharedPtr msg) {
+  keisan::Angle<double> roll = keisan::make_degree(msg->orientation.roll);
+  keisan::Angle<double> pitch = keisan::make_degree(msg->orientation.pitch);
+  keisan::Angle<double> yaw = keisan::make_degree(msg->orientation.yaw);
+
+  orientation = keisan::Euler<double>(roll, pitch, yaw);
 }
 
 void WebotsDriver::step() {
@@ -87,6 +100,10 @@ void WebotsDriver::step() {
     std::cout << (int)joint.get_id() << ": " << radToDeg(position) << "\n";
     motors[joint.get_id() - 1]->setPosition(position);
   }
+  std::cout << "RPY : " << \
+    orientation.roll.degree() << " " << \
+    orientation.pitch.degree() << " " << \
+    orientation.yaw.degree() << "\n";
 }
 }  // namespace webots_driver
 
