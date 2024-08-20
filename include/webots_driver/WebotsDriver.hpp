@@ -1,18 +1,18 @@
 #ifndef WEBOTS_ROS2_PLUGIN_EXAMPLE_HPP
 #define WEBOTS_ROS2_PLUGIN_EXAMPLE_HPP
 
-#include <rclcpp/macros.hpp>
-#include <rclcpp/rclcpp.hpp>
-#include <webots/Motor.hpp>
-#include <webots/Robot.hpp>
-#include <webots_ros2_driver/PluginInterface.hpp>
-#include <webots_ros2_driver/WebotsNode.hpp>
-
 #include "kansei_interfaces/msg/status.hpp"
 #include "keisan/keisan.hpp"
 #include "tachimawari/joint/model/joint.hpp"
 #include "tachimawari_interfaces/msg/current_joints.hpp"
 #include "tachimawari_interfaces/msg/joint.hpp"
+
+#include <rclcpp/macros.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <webots/Motor.hpp>
+#include <webots/Supervisor.hpp>
+#include <webots_ros2_driver/PluginInterface.hpp>
+#include <webots_ros2_driver/WebotsNode.hpp>
 
 namespace webots_driver {
 class WebotsDriver : public webots_ros2_driver::PluginInterface {
@@ -39,8 +39,8 @@ private:
   std::vector<double> jointsLowerLimit;
   std::vector<double> jointsUpperLimit;
 
-  webots::Robot *robot;
   webots::Motor *motors[20];
+  webots::Supervisor *robot;
 };
 }  // namespace webots_driver
 #endif

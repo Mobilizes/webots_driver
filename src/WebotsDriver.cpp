@@ -1,17 +1,19 @@
 #include "webots_driver/WebotsDriver.hpp"
 
-#include <functional>
-#include <iostream>
-#include <rclcpp/rclcpp.hpp>
-#include <webots/Motor.hpp>
-#include <webots/Robot.hpp>
-
 #include "jitsuyo/cli.hpp"
 #include "kansei_interfaces/msg/status.hpp"
 #include "keisan/keisan.hpp"
 #include "tachimawari/joint/model/joint.hpp"
 #include "tachimawari_interfaces/msg/current_joints.hpp"
 #include "tachimawari_interfaces/msg/joint.hpp"
+
+#include <functional>
+#include <iostream>
+#include <rclcpp/rclcpp.hpp>
+#include <webots/Field.hpp>
+#include <webots/Motor.hpp>
+#include <webots/Node.hpp>
+#include <webots/Supervisor.hpp>
 
 std::string motorNames[20] = {
   "ShoulderR", "ShoulderL", "ArmUpperR", "ArmUpperL", "ArmLowerR",
@@ -31,13 +33,28 @@ using keisan::literals::operator""_pi;
 
 double degToRad(double degree) { return degree * 1_pi / 180.0; }
 double radToDeg(double radian) { return radian * 180.0 / 1_pi; }
+double* quaternionToAxisAngle(keisan::Quaternion<double> quaternion) {
+  double angle = 2 * std::acos(quaternion.w);
+  double s = std::sqrt(1 - quaternion.w * quaternion.w);
+  double x = quaternion.x / s;
+  double y = quaternion.y / s;
+  double z = quaternion.z / s;
+
+  double *result = new double[4];
+  result[0] = x;
+  result[1] = y;
+  result[2] = z;
+  result[3] = angle;
+
+  return result;
+}
 
 namespace webots_driver {
 void WebotsDriver::init(
     webots_ros2_driver::WebotsNode *node,
     std::unordered_map<std::string, std::string> &parameters) {
   
-  robot = new webots::Robot;
+  robot = new webots::Supervisor;
 
   for (int i = 0; i < 20; ++i)
     joints.push_back(tachimawari::joint::Joint(i + 1, 0.0));
@@ -100,10 +117,37 @@ void WebotsDriver::step() {
     std::cout << (int)joint.get_id() << ": " << radToDeg(position) << "\n";
     motors[joint.get_id() - 1]->setPosition(position);
   }
-  std::cout << "RPY : " << \
-    orientation.roll.degree() << " " << \
-    orientation.pitch.degree() << " " << \
-    orientation.yaw.degree() << "\n";
+  std::cout << "RPY : "
+            << orientation.roll.degree() << " "
+            << orientation.pitch.degree() << " "
+            << orientation.yaw.degree() << "\n";
+  
+  keisan::Quaternion<double> orientation_quaternion = orientation.quaternion();
+  std::cout << "Quaternion : "
+            << orientation_quaternion.x << " "
+            << orientation_quaternion.y << " "
+            << orientation_quaternion.z << " "
+            << orientation_quaternion.w << "\n";
+  
+  webots::Node *robot_node = robot->getSelf();
+  webots::Field *robot_rotation = robot_node->getField("rotation");
+
+  double* new_orientation = quaternionToAxisAngle(orientation_quaternion);
+  bool valid_orientation = true;
+
+  std::cout << "Axis Angle : ";
+  for (int i = 0; i < 4; ++i) {
+    std::cout << new_orientation[i] << " ";
+    valid_orientation &= !std::isnan(new_orientation[i]);
+  }
+  std::cout << "\n";
+
+  if (!valid_orientation) {
+    std::cout << "Invalid orientation\n";
+    return;
+  }
+
+  robot_rotation->setSFRotation(new_orientation);
 }
 }  // namespace webots_driver
 
