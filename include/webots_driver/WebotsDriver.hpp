@@ -35,9 +35,9 @@ private:
   keisan::Euler<double> orientation;
 
   std::vector<tachimawari::joint::Joint> joints;
-  std::vector<double> jointsOffset;
-  std::vector<double> jointsLowerLimit;
-  std::vector<double> jointsUpperLimit;
+  std::vector<double> joints_offset;
+  std::vector<double> joints_lower_limit;
+  std::vector<double> joints_upper_limit;
 
   webots::Motor *motors[20];
   webots::Supervisor *robot;

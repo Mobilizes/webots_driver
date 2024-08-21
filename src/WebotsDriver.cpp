@@ -59,15 +59,15 @@ void WebotsDriver::init(
   for (int i = 0; i < 20; ++i)
     joints.push_back(tachimawari::joint::Joint(i + 1, 0.0));
 
-  jointsOffset = {
-    0.0_pi, 0.0_pi, 0.0_pi, 0.0_pi, -0.5_pi,
-    0.5_pi, 0.0_pi, 0.0_pi, 0.0_pi, 0.0_pi,
-    0.0_pi, 0.0_pi, 0.0_pi, 0.0_pi, 0.0_pi,
-    0.0_pi, 0.0_pi, 0.0_pi, 0.0_pi, 0.0_pi,
+  joints_offset = {
+    0.000000_pi, 0.000000_pi, 0.000000_pi, 0.000000_pi, -0.50000_pi,
+    0.500000_pi, 0.000000_pi, 0.000000_pi, 0.000000_pi, 0.000000_pi,
+    0.000000_pi, 0.000000_pi, 0.000000_pi, 0.000000_pi, 0.000000_pi,
+    0.000000_pi, 0.000000_pi, 0.000000_pi, 0.000000_pi, 0.000000_pi,
   };
 
-  jointsLowerLimit.resize(20);
-  jointsUpperLimit.resize(20);
+  joints_lower_limit.resize(20);
+  joints_upper_limit.resize(20);
 
   for (int i = 0; i < 20; ++i) {
     motors[i] = robot->getMotor(motorNames[i]);
@@ -75,10 +75,10 @@ void WebotsDriver::init(
       RCLCPP_ERROR(node->get_logger(), "Failed to initialize motor: %s", motorNames[i]);
       return;
     }
-    motors[i]->setPosition(jointsOffset[i]);
+    motors[i]->setPosition(joints_offset[i]);
     motors[i]->setVelocity(motors[i]->getMaxVelocity());
-    jointsLowerLimit[i] = motors[i]->getMinPosition();
-    jointsUpperLimit[i] = motors[i]->getMaxPosition();
+    joints_lower_limit[i] = motors[i]->getMinPosition();
+    joints_upper_limit[i] = motors[i]->getMaxPosition();
   }
 
   current_joints_subscription = node->create_subscription<CurrentJoints>(
@@ -88,11 +88,13 @@ void WebotsDriver::init(
   measurement_status_subscription = node->create_subscription<MeasurementStatus>(
     "/measurement/status", rclcpp::SensorDataQoS().reliable(),
     std::bind(&WebotsDriver::measurementStatusCallback, this, std::placeholders::_1));
+
+  std::cout << std::setprecision(4);  
 }
 
 void WebotsDriver::adjustInit(double & position, const uint8_t & id) {
-  position += jointsOffset[id - 1];
-  position = keisan::clamp(position, jointsLowerLimit[id - 1], jointsUpperLimit[id - 1]);
+  position += joints_offset[id - 1];
+  position = keisan::clamp(position, joints_lower_limit[id - 1], joints_upper_limit[id - 1]);
 }
 
 void WebotsDriver::currentJointsCallback(const CurrentJoints::SharedPtr msg) {
