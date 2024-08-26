@@ -8,9 +8,9 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(jitsuyo REQUIRED)
-find_package(kansei REQUIRED)
 find_package(kansei_interfaces REQUIRED)
 find_package(keisan REQUIRED)
+find_package(OpenCV REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(tachimawari REQUIRED)
@@ -32,6 +32,9 @@ target_include_directories(
 ament_target_dependencies(
   ${PROJECT_NAME}
   jitsuyo
+  kansei_interfaces
+  keisan
+  OpenCV
   pluginlib
   rclcpp
   tachimawari

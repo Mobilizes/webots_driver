@@ -9,7 +9,9 @@
 
 #include <functional>
 #include <iostream>
+#include <opencv2/opencv.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <webots/Camera.hpp>
 #include <webots/Field.hpp>
 #include <webots/Motor.hpp>
 #include <webots/Node.hpp>
@@ -55,6 +57,9 @@ void WebotsDriver::init(
     std::unordered_map<std::string, std::string> &parameters) {
   
   robot = new webots::Supervisor;
+  camera = robot->getCamera("Camera");
+
+  camera->enable(robot->getBasicTimeStep());
 
   for (int i = 0; i < 20; ++i)
     joints.push_back(tachimawari::joint::Joint(i + 1, 0.0));
@@ -113,12 +118,19 @@ void WebotsDriver::measurementStatusCallback(const MeasurementStatus::SharedPtr 
 
 void WebotsDriver::step() {
   jitsuyo::clear();
+
+  stepMotion();
+  stepVision();
+}
+
+void WebotsDriver::stepMotion() {
   for (auto joint : joints) {
     double position = degToRad(joint.get_position());
     adjustInit(position, joint.get_id());
     std::cout << (int)joint.get_id() << ": " << radToDeg(position) << "\n";
     motors[joint.get_id() - 1]->setPosition(position);
   }
+
   std::cout << "RPY : "
             << orientation.roll.degree() << " "
             << orientation.pitch.degree() << " "
@@ -150,6 +162,14 @@ void WebotsDriver::step() {
   }
 
   robot_rotation->setSFRotation(new_orientation);
+}
+
+void WebotsDriver::stepVision() {
+  const std::byte *image = camera->getImage();
+  if (image == nullptr) {
+    std::cout << "Image not found!\n";
+    return;
+  }
 }
 }  // namespace webots_driver
 

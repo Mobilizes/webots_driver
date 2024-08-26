@@ -9,6 +9,7 @@
 
 #include <rclcpp/macros.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <webots/Camera.hpp>
 #include <webots/Motor.hpp>
 #include <webots/Supervisor.hpp>
 #include <webots_ros2_driver/PluginInterface.hpp>
@@ -28,6 +29,8 @@ private:
   void adjustInit(double & position, const uint8_t & id);
   void currentJointsCallback(const CurrentJoints::SharedPtr msg);
   void measurementStatusCallback(const MeasurementStatus::SharedPtr msg);
+  void stepMotion();
+  void stepVision();
 
   rclcpp::Subscription<CurrentJoints>::SharedPtr current_joints_subscription;
   rclcpp::Subscription<MeasurementStatus>::SharedPtr measurement_status_subscription;
@@ -39,6 +42,7 @@ private:
   std::vector<double> joints_lower_limit;
   std::vector<double> joints_upper_limit;
 
+  webots::Camera *camera;
   webots::Motor *motors[20];
   webots::Supervisor *robot;
 };
