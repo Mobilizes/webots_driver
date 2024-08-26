@@ -1,22 +1,24 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 project(webots_driver)
 
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# Besides the package specific dependencies we also need the `pluginlib` and `webots_ros2_driver`
+# find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(std_msgs REQUIRED)
-find_package(geometry_msgs REQUIRED)
+find_package(jitsuyo REQUIRED)
+find_package(kansei REQUIRED)
+find_package(kansei_interfaces REQUIRED)
+find_package(keisan REQUIRED)
 find_package(pluginlib REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(tachimawari REQUIRED)
+find_package(tachimawari_interfaces REQUIRED)
 find_package(webots_ros2_driver REQUIRED)
 
-# Export the plugin configuration file
 pluginlib_export_plugin_description_file(webots_ros2_driver webots_driver.xml)
 
-# MyRobotDriver library
 add_library(
   ${PROJECT_NAME}
   SHARED
@@ -29,8 +31,11 @@ target_include_directories(
 )
 ament_target_dependencies(
   ${PROJECT_NAME}
+  jitsuyo
   pluginlib
   rclcpp
+  tachimawari
+  tachimawari_interfaces
   webots_ros2_driver
 )
 install(TARGETS

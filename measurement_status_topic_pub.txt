@@ -1,0 +1,1 @@
+ros2 topic pub /measurement/status kansei_interfaces/msg/Status "{is_calibrated: true, orientation: {roll: 1.0, pitch: 2.0, yaw: 1.0}}"
