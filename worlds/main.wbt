@@ -4,6 +4,7 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/objects/floors/protos/CircleArena.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/robots/robotis/darwin-op/protos/RobotisOp2.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/balls/protos/Ball.proto"
 
 WorldInfo {
 }
@@ -24,4 +25,19 @@ RobotisOp2 {
   name "ichiro"
   controller "<extern>"
   supervisor TRUE
+  headSlot [
+    Camera {
+      translation 0 0.0329074 0.0359816
+      rotation 0.577351 0.577352 0.577348 -2.094396
+      name "Recognition_Camera"
+      fieldOfView 1.0123
+      width 160
+      height 120
+      recognition Recognition {
+      }
+    }
+  ]
+}
+Ball {
+  translation 0.3 0 0.1625
 }

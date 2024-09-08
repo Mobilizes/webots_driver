@@ -57,9 +57,14 @@ void WebotsDriver::init(
     std::unordered_map<std::string, std::string> &parameters) {
   
   robot = new webots::Supervisor;
-  camera = robot->getCamera("Camera");
+  raw_camera = robot->getCamera("Camera");
+  recognition_camera = robot->getCamera("Recognition_Camera");
 
-  camera->enable(robot->getBasicTimeStep());
+  raw_camera->enable(robot->getBasicTimeStep());
+
+  recognition_camera->enable(robot->getBasicTimeStep());
+  recognition_camera->recognitionEnable(robot->getBasicTimeStep());
+  recognition_camera->enableRecognitionSegmentation();
 
   for (int i = 0; i < 20; ++i)
     joints.push_back(tachimawari::joint::Joint(i + 1, 0.0));
@@ -94,7 +99,7 @@ void WebotsDriver::init(
     "/measurement/status", rclcpp::SensorDataQoS().reliable(),
     std::bind(&WebotsDriver::measurementStatusCallback, this, std::placeholders::_1));
 
-  std::cout << std::setprecision(4);  
+  std::cout << std::setprecision(4);
 }
 
 void WebotsDriver::adjustInit(double & position, const uint8_t & id) {
@@ -119,8 +124,21 @@ void WebotsDriver::measurementStatusCallback(const MeasurementStatus::SharedPtr 
 void WebotsDriver::step() {
   jitsuyo::clear();
 
-  stepMotion();
   stepVision();
+  stepMotion();
+}
+
+void WebotsDriver::stepVision() {
+  const unsigned char *raw_image = raw_camera->getImage();
+  const unsigned char *recognition_image = recognition_camera->getRecognitionSegmentationImage();
+
+  cv::Mat recognition_image_mat(480, 640, CV_8UC1, (void *)recognition_image);
+  
+  cv::Mat display_image;
+  cv::cvtColor(recognition_image_mat, display_image, cv::COLOR_GRAY2BGR);
+
+  cv::imshow("Recognition Camera", display_image);
+  cv::waitKey(1);
 }
 
 void WebotsDriver::stepMotion() {
@@ -162,14 +180,6 @@ void WebotsDriver::stepMotion() {
   }
 
   robot_rotation->setSFRotation(new_orientation);
-}
-
-void WebotsDriver::stepVision() {
-  const std::byte *image = camera->getImage();
-  if (image == nullptr) {
-    std::cout << "Image not found!\n";
-    return;
-  }
 }
 }  // namespace webots_driver
 

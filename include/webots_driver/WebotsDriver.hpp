@@ -42,7 +42,8 @@ private:
   std::vector<double> joints_lower_limit;
   std::vector<double> joints_upper_limit;
 
-  webots::Camera *camera;
+  webots::Camera *raw_camera;
+  webots::Camera *recognition_camera;
   webots::Motor *motors[20];
   webots::Supervisor *robot;
 };
