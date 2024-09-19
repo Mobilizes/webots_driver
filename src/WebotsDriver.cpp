@@ -132,13 +132,38 @@ void WebotsDriver::stepVision() {
   const unsigned char *raw_image = raw_camera->getImage();
   const unsigned char *recognition_image = recognition_camera->getRecognitionSegmentationImage();
 
-  cv::Mat recognition_image_mat(480, 640, CV_8UC1, (void *)recognition_image);
+  if (!recognition_image) {
+    std::cout << "No recognition image\n";
+  }
+
+  if (!raw_image) {
+    std::cout << "No raw image\n";
+  }
+
+  if (!raw_image || !recognition_image) {
+    return;
+  }
+
+  cv::Mat recognition_image_mat(recognition_camera->getHeight(), recognition_camera->getWidth(), CV_8UC1, (void *)recognition_image);
   
   cv::Mat display_image;
-  cv::cvtColor(recognition_image_mat, display_image, cv::COLOR_GRAY2BGR);
+  cv::applyColorMap(recognition_image_mat, display_image, cv::COLORMAP_JET);
 
   cv::imshow("Recognition Camera", display_image);
   cv::waitKey(1);
+
+  std::cout << "Number of objects: " << recognition_camera->getRecognitionNumberOfObjects() << "\n";
+  const auto recognition_objects = recognition_camera->getRecognitionObjects();
+  for (int i = 0; i < recognition_camera->getRecognitionNumberOfObjects(); ++i) {
+    const auto &obj = recognition_objects[i];
+
+    std::cout << "Object " << i << ": " << obj.model;
+    std::cout << " at "
+      << obj.position_on_image[0] << " "
+      << obj.position_on_image[1] << " "
+      << obj.size_on_image[0] << " "
+      << obj.size_on_image[1] << "\n";
+  }
 }
 
 void WebotsDriver::stepMotion() {
