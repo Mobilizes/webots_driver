@@ -10,6 +10,7 @@ find_package(ament_cmake REQUIRED)
 find_package(jitsuyo REQUIRED)
 find_package(kansei_interfaces REQUIRED)
 find_package(keisan REQUIRED)
+find_package(ninshiki_interfaces REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -34,6 +35,7 @@ ament_target_dependencies(
   jitsuyo
   kansei_interfaces
   keisan
+  ninshiki_interfaces
   OpenCV
   pluginlib
   rclcpp

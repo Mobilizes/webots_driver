@@ -3,6 +3,7 @@
 
 #include "kansei_interfaces/msg/status.hpp"
 #include "keisan/keisan.hpp"
+#include "ninshiki_interfaces/msg/detected_objects.hpp"
 #include "tachimawari/joint/model/joint.hpp"
 #include "tachimawari_interfaces/msg/current_joints.hpp"
 #include "tachimawari_interfaces/msg/joint.hpp"
@@ -18,8 +19,9 @@
 namespace webots_driver {
 class WebotsDriver : public webots_ros2_driver::PluginInterface {
 public:
-  using MeasurementStatus = kansei_interfaces::msg::Status;
   using CurrentJoints = tachimawari_interfaces::msg::CurrentJoints;
+  using DetectedObjects = ninshiki_interfaces::msg::DetectedObjects;
+  using MeasurementStatus = kansei_interfaces::msg::Status;
 
   void step() override;
   void init(webots_ros2_driver::WebotsNode *node,
@@ -34,6 +36,8 @@ private:
 
   rclcpp::Subscription<CurrentJoints>::SharedPtr current_joints_subscription;
   rclcpp::Subscription<MeasurementStatus>::SharedPtr measurement_status_subscription;
+
+  rclcpp::Publisher<DetectedObjects>::SharedPtr detected_objects_publisher;
 
   keisan::Euler<double> orientation;
 

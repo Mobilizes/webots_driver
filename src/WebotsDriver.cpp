@@ -3,6 +3,8 @@
 #include "jitsuyo/cli.hpp"
 #include "kansei_interfaces/msg/status.hpp"
 #include "keisan/keisan.hpp"
+#include "ninshiki_interfaces/msg/detected_object.hpp"
+#include "ninshiki_interfaces/msg/detected_objects.hpp"
 #include "tachimawari/joint/model/joint.hpp"
 #include "tachimawari_interfaces/msg/current_joints.hpp"
 #include "tachimawari_interfaces/msg/joint.hpp"
@@ -92,12 +94,15 @@ void WebotsDriver::init(
   }
 
   current_joints_subscription = node->create_subscription<CurrentJoints>(
-    "/joint/current_joints", rclcpp::SensorDataQoS().reliable(),
+    "/joint/current_joints", 10,
     std::bind(&WebotsDriver::currentJointsCallback, this, std::placeholders::_1));
 
   measurement_status_subscription = node->create_subscription<MeasurementStatus>(
-    "/measurement/status", rclcpp::SensorDataQoS().reliable(),
+    "/measurement/status", 10,
     std::bind(&WebotsDriver::measurementStatusCallback, this, std::placeholders::_1));
+  
+  detected_objects_publisher = node->create_publisher<DetectedObjects>(
+    "ninshiki_cpp/dnn_detection", 10);
 
   std::cout << std::setprecision(4);
 }
@@ -145,25 +150,40 @@ void WebotsDriver::stepVision() {
   }
 
   cv::Mat recognition_image_mat(recognition_camera->getHeight(), recognition_camera->getWidth(), CV_8UC1, (void *)recognition_image);
-  
-  cv::Mat display_image;
-  cv::applyColorMap(recognition_image_mat, display_image, cv::COLORMAP_JET);
 
-  cv::imshow("Recognition Camera", display_image);
-  cv::waitKey(1);
+  ninshiki_interfaces::msg::DetectedObjects detected_objects;
 
   std::cout << "Number of objects: " << recognition_camera->getRecognitionNumberOfObjects() << "\n";
   const auto recognition_objects = recognition_camera->getRecognitionObjects();
   for (int i = 0; i < recognition_camera->getRecognitionNumberOfObjects(); ++i) {
     const auto &obj = recognition_objects[i];
 
-    std::cout << "Object " << i << ": " << obj.model;
+    std::string label = "ball";
+
+    int right = obj.position_on_image[0] + obj.size_on_image[0] / 2;
+    int bottom = obj.position_on_image[1] + obj.size_on_image[1] / 2;
+    int left = obj.position_on_image[0] - obj.size_on_image[0] / 2;
+    int top = obj.position_on_image[1] - obj.size_on_image[1] / 2;
+
+    std::cout << "Object " << i << ": " << label;
     std::cout << " at "
-      << obj.position_on_image[0] << " "
-      << obj.position_on_image[1] << " "
-      << obj.size_on_image[0] << " "
-      << obj.size_on_image[1] << "\n";
+      << left << " "
+      << top << " "
+      << right << " "
+      << bottom << "\n";
+    
+    ninshiki_interfaces::msg::DetectedObject detection_object;
+    detection_object.label = label;
+    detection_object.score = 1.0;
+    detection_object.left = left;
+    detection_object.top = top;
+    detection_object.right = right;
+    detection_object.bottom = bottom;
+
+    detected_objects.detected_objects.push_back(detection_object);
   }
+
+  detected_objects_publisher->publish(detected_objects);
 }
 
 void WebotsDriver::stepMotion() {
@@ -179,23 +199,23 @@ void WebotsDriver::stepMotion() {
             << orientation.pitch.degree() << " "
             << orientation.yaw.degree() << "\n";
   
-  keisan::Quaternion<double> orientation_quaternion = orientation.quaternion();
+  keisan::Quaternion<double> quarternion_orientation = orientation.quaternion();
   std::cout << "Quaternion : "
-            << orientation_quaternion.x << " "
-            << orientation_quaternion.y << " "
-            << orientation_quaternion.z << " "
-            << orientation_quaternion.w << "\n";
+            << quarternion_orientation.x << " "
+            << quarternion_orientation.y << " "
+            << quarternion_orientation.z << " "
+            << quarternion_orientation.w << "\n";
   
   webots::Node *robot_node = robot->getSelf();
   webots::Field *robot_rotation = robot_node->getField("rotation");
 
-  double* new_orientation = quaternionToAxisAngle(orientation_quaternion);
+  double* axis_angle_orientation = quaternionToAxisAngle(quarternion_orientation);
   bool valid_orientation = true;
 
   std::cout << "Axis Angle : ";
   for (int i = 0; i < 4; ++i) {
-    std::cout << new_orientation[i] << " ";
-    valid_orientation &= !std::isnan(new_orientation[i]);
+    std::cout << axis_angle_orientation[i] << " ";
+    valid_orientation &= !std::isnan(axis_angle_orientation[i]);
   }
   std::cout << "\n";
 
@@ -204,7 +224,13 @@ void WebotsDriver::stepMotion() {
     return;
   }
 
-  robot_rotation->setSFRotation(new_orientation);
+  robot_rotation->setSFRotation(axis_angle_orientation);
+
+  // TODO: Make the robot float in a fixed spot.
+  // webots::Field *robot_translation = robot_node->getField("translation");
+  // double translation[3] = {-0.05, 0.015, 0.4};
+
+  // robot_translation->setSFVec3f(translation);
 }
 }  // namespace webots_driver
 

@@ -13,6 +13,7 @@
   <depend>kansei_interfaces</depend>
   <depend>keisan</depend>
   <depend>libopencv-dev</depend>
+  <depend>ninshiki_interfaces</depend>
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
   <depend>tachimawari</depend>
