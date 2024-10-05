@@ -3,12 +3,14 @@
 
 #include "kansei_interfaces/msg/status.hpp"
 #include "keisan/keisan.hpp"
+#include "ninshiki_interfaces/msg/detected_objects.hpp"
 #include "tachimawari/joint/model/joint.hpp"
 #include "tachimawari_interfaces/msg/current_joints.hpp"
 #include "tachimawari_interfaces/msg/joint.hpp"
 
 #include <rclcpp/macros.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <webots/Camera.hpp>
 #include <webots/Motor.hpp>
 #include <webots/Supervisor.hpp>
 #include <webots_ros2_driver/PluginInterface.hpp>
@@ -17,8 +19,9 @@
 namespace webots_driver {
 class WebotsDriver : public webots_ros2_driver::PluginInterface {
 public:
-  using MeasurementStatus = kansei_interfaces::msg::Status;
   using CurrentJoints = tachimawari_interfaces::msg::CurrentJoints;
+  using DetectedObjects = ninshiki_interfaces::msg::DetectedObjects;
+  using MeasurementStatus = kansei_interfaces::msg::Status;
 
   void step() override;
   void init(webots_ros2_driver::WebotsNode *node,
@@ -28,9 +31,13 @@ private:
   void adjustInit(double & position, const uint8_t & id);
   void currentJointsCallback(const CurrentJoints::SharedPtr msg);
   void measurementStatusCallback(const MeasurementStatus::SharedPtr msg);
+  void stepMotion();
+  void stepVision();
 
   rclcpp::Subscription<CurrentJoints>::SharedPtr current_joints_subscription;
   rclcpp::Subscription<MeasurementStatus>::SharedPtr measurement_status_subscription;
+
+  rclcpp::Publisher<DetectedObjects>::SharedPtr detected_objects_publisher;
 
   keisan::Euler<double> orientation;
 
@@ -39,6 +46,8 @@ private:
   std::vector<double> joints_lower_limit;
   std::vector<double> joints_upper_limit;
 
+  webots::Camera *raw_camera;
+  webots::Camera *recognition_camera;
   webots::Motor *motors[20];
   webots::Supervisor *robot;
 };
