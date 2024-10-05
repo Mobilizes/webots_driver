@@ -59,6 +59,11 @@ void WebotsDriver::init(
     std::unordered_map<std::string, std::string> &parameters) {
   
   robot = new webots::Supervisor;
+
+  robot_node = robot->getSelf();
+
+  robot_rotation = robot_node->getField("rotation");
+
   raw_camera = robot->getCamera("Camera");
   recognition_camera = robot->getCamera("Recognition_Camera");
 
@@ -103,6 +108,9 @@ void WebotsDriver::init(
   
   detected_objects_publisher = node->create_publisher<DetectedObjects>(
     "ninshiki_cpp/dnn_detection", 10);
+  
+  measurement_status_publisher = node->create_publisher<MeasurementStatus>(
+    "/measurement/status", 10);
 
   std::cout << std::setprecision(4);
 }
@@ -110,6 +118,20 @@ void WebotsDriver::init(
 void WebotsDriver::adjustInit(double & position, const uint8_t & id) {
   position += joints_offset[id - 1];
   position = keisan::clamp(position, joints_lower_limit[id - 1], joints_upper_limit[id - 1]);
+}
+
+keisan::Euler<double> WebotsDriver::getRPYOrientation() {
+  return getQuaternionOrientation().euler();
+}
+
+keisan::Quaternion<double> WebotsDriver::getQuaternionOrientation() {
+  const double *quarternion = robot_rotation->getSFRotation();
+  double x = quarternion[0];
+  double y = quarternion[1];
+  double z = quarternion[2];
+  double w = quarternion[3];
+
+  return keisan::Quaternion<double>(x, y, z, w);
 }
 
 void WebotsDriver::currentJointsCallback(const CurrentJoints::SharedPtr msg) {
@@ -125,6 +147,20 @@ void WebotsDriver::currentJointsCallback(const CurrentJoints::SharedPtr msg) {
 
 //   orientation = keisan::Euler<double>(roll, pitch, yaw);
 // }
+
+void WebotsDriver::publishMeasurementStatus() {
+  keisan::Euler<double> rpy_orientation = getRPYOrientation();
+
+  auto status_msg = MeasurementStatus();
+
+  status_msg.is_calibrated = true;
+
+  status_msg.orientation.roll = rpy_orientation.roll.degree();
+  status_msg.orientation.pitch = rpy_orientation.pitch.degree();
+  status_msg.orientation.yaw = rpy_orientation.yaw.degree();
+
+  measurement_status_publisher->publish(status_msg);
+}
 
 void WebotsDriver::step() {
   jitsuyo::clear();
@@ -194,10 +230,14 @@ void WebotsDriver::stepMotion() {
     motors[joint.get_id() - 1]->setPosition(position);
   }
 
-  // std::cout << "RPY : "
-  //           << orientation.roll.degree() << " "
-  //           << orientation.pitch.degree() << " "
-  //           << orientation.yaw.degree() << "\n";
+  publishMeasurementStatus();
+
+  keisan::Euler<double> orientation = getRPYOrientation();
+
+  std::cout << "RPY : "
+            << orientation.roll.degree() << " "
+            << orientation.pitch.degree() << " "
+            << orientation.yaw.degree() << "\n";
   
   // keisan::Quaternion<double> quarternion_orientation = orientation.quaternion();
   // std::cout << "Quaternion : "

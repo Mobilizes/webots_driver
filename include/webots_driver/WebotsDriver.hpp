@@ -11,7 +11,9 @@
 #include <rclcpp/macros.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <webots/Camera.hpp>
+#include <webots/Field.hpp>
 #include <webots/Motor.hpp>
+#include <webots/Node.hpp>
 #include <webots/Supervisor.hpp>
 #include <webots_ros2_driver/PluginInterface.hpp>
 #include <webots_ros2_driver/WebotsNode.hpp>
@@ -23,14 +25,20 @@ public:
   using DetectedObjects = ninshiki_interfaces::msg::DetectedObjects;
   using MeasurementStatus = kansei_interfaces::msg::Status;
 
-  void step() override;
   void init(webots_ros2_driver::WebotsNode *node,
             std::unordered_map<std::string, std::string> &parameters) override;
+  void step() override;
   
 private:
   void adjustInit(double & position, const uint8_t & id);
+  keisan::Euler<double> getRPYOrientation();
+  keisan::Quaternion<double> getQuaternionOrientation();
+
   void currentJointsCallback(const CurrentJoints::SharedPtr msg);
   // void measurementStatusCallback(const MeasurementStatus::SharedPtr msg);
+  
+  void publishMeasurementStatus();
+
   void stepMotion();
   void stepVision();
 
@@ -38,8 +46,7 @@ private:
   // rclcpp::Subscription<MeasurementStatus>::SharedPtr measurement_status_subscription;
 
   rclcpp::Publisher<DetectedObjects>::SharedPtr detected_objects_publisher;
-
-  keisan::Euler<double> orientation;
+  rclcpp::Publisher<MeasurementStatus>::SharedPtr measurement_status_publisher;
 
   std::vector<tachimawari::joint::Joint> joints;
   std::vector<double> joints_offset;
@@ -48,7 +55,9 @@ private:
 
   webots::Camera *raw_camera;
   webots::Camera *recognition_camera;
+  webots::Field *robot_rotation;
   webots::Motor *motors[20];
+  webots::Node *robot_node;
   webots::Supervisor *robot;
 };
 }  // namespace webots_driver
