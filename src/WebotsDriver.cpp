@@ -97,9 +97,9 @@ void WebotsDriver::init(
     "/joint/current_joints", 10,
     std::bind(&WebotsDriver::currentJointsCallback, this, std::placeholders::_1));
 
-  measurement_status_subscription = node->create_subscription<MeasurementStatus>(
-    "/measurement/status", 10,
-    std::bind(&WebotsDriver::measurementStatusCallback, this, std::placeholders::_1));
+  // measurement_status_subscription = node->create_subscription<MeasurementStatus>(
+  //   "/measurement/status", 10,
+  //   std::bind(&WebotsDriver::measurementStatusCallback, this, std::placeholders::_1));
   
   detected_objects_publisher = node->create_publisher<DetectedObjects>(
     "ninshiki_cpp/dnn_detection", 10);
@@ -118,13 +118,13 @@ void WebotsDriver::currentJointsCallback(const CurrentJoints::SharedPtr msg) {
   }
 }
 
-void WebotsDriver::measurementStatusCallback(const MeasurementStatus::SharedPtr msg) {
-  keisan::Angle<double> roll = keisan::make_degree(msg->orientation.roll);
-  keisan::Angle<double> pitch = keisan::make_degree(msg->orientation.pitch);
-  keisan::Angle<double> yaw = keisan::make_degree(msg->orientation.yaw);
+// void WebotsDriver::measurementStatusCallback(const MeasurementStatus::SharedPtr msg) {
+//   keisan::Angle<double> roll = keisan::make_degree(msg->orientation.roll);
+//   keisan::Angle<double> pitch = keisan::make_degree(msg->orientation.pitch);
+//   keisan::Angle<double> yaw = keisan::make_degree(msg->orientation.yaw);
 
-  orientation = keisan::Euler<double>(roll, pitch, yaw);
-}
+//   orientation = keisan::Euler<double>(roll, pitch, yaw);
+// }
 
 void WebotsDriver::step() {
   jitsuyo::clear();
@@ -194,37 +194,37 @@ void WebotsDriver::stepMotion() {
     motors[joint.get_id() - 1]->setPosition(position);
   }
 
-  std::cout << "RPY : "
-            << orientation.roll.degree() << " "
-            << orientation.pitch.degree() << " "
-            << orientation.yaw.degree() << "\n";
+  // std::cout << "RPY : "
+  //           << orientation.roll.degree() << " "
+  //           << orientation.pitch.degree() << " "
+  //           << orientation.yaw.degree() << "\n";
   
-  keisan::Quaternion<double> quarternion_orientation = orientation.quaternion();
-  std::cout << "Quaternion : "
-            << quarternion_orientation.x << " "
-            << quarternion_orientation.y << " "
-            << quarternion_orientation.z << " "
-            << quarternion_orientation.w << "\n";
+  // keisan::Quaternion<double> quarternion_orientation = orientation.quaternion();
+  // std::cout << "Quaternion : "
+  //           << quarternion_orientation.x << " "
+  //           << quarternion_orientation.y << " "
+  //           << quarternion_orientation.z << " "
+  //           << quarternion_orientation.w << "\n";
   
-  webots::Node *robot_node = robot->getSelf();
-  webots::Field *robot_rotation = robot_node->getField("rotation");
+  // webots::Node *robot_node = robot->getSelf();
+  // webots::Field *robot_rotation = robot_node->getField("rotation");
 
-  double* axis_angle_orientation = quaternionToAxisAngle(quarternion_orientation);
-  bool valid_orientation = true;
+  // double* axis_angle_orientation = quaternionToAxisAngle(quarternion_orientation);
+  // bool valid_orientation = true;
 
-  std::cout << "Axis Angle : ";
-  for (int i = 0; i < 4; ++i) {
-    std::cout << axis_angle_orientation[i] << " ";
-    valid_orientation &= !std::isnan(axis_angle_orientation[i]);
-  }
-  std::cout << "\n";
+  // std::cout << "Axis Angle : ";
+  // for (int i = 0; i < 4; ++i) {
+  //   std::cout << axis_angle_orientation[i] << " ";
+  //   valid_orientation &= !std::isnan(axis_angle_orientation[i]);
+  // }
+  // std::cout << "\n";
 
-  if (!valid_orientation) {
-    std::cout << "Invalid orientation\n";
-    return;
-  }
+  // if (!valid_orientation) {
+  //   std::cout << "Invalid orientation\n";
+  //   return;
+  // }
 
-  robot_rotation->setSFRotation(axis_angle_orientation);
+  // robot_rotation->setSFRotation(axis_angle_orientation);
 
   // TODO: Make the robot float in a fixed spot.
   // webots::Field *robot_translation = robot_node->getField("translation");

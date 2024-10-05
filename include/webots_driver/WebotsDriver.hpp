@@ -30,12 +30,12 @@ public:
 private:
   void adjustInit(double & position, const uint8_t & id);
   void currentJointsCallback(const CurrentJoints::SharedPtr msg);
-  void measurementStatusCallback(const MeasurementStatus::SharedPtr msg);
+  // void measurementStatusCallback(const MeasurementStatus::SharedPtr msg);
   void stepMotion();
   void stepVision();
 
   rclcpp::Subscription<CurrentJoints>::SharedPtr current_joints_subscription;
-  rclcpp::Subscription<MeasurementStatus>::SharedPtr measurement_status_subscription;
+  // rclcpp::Subscription<MeasurementStatus>::SharedPtr measurement_status_subscription;
 
   rclcpp::Publisher<DetectedObjects>::SharedPtr detected_objects_publisher;
 
