@@ -20,8 +20,8 @@ CircleArena {
   radius 3
 }
 RobotisOp2 {
-  translation -0.032211 0.056002 0.443226
-  rotation 0.47991977458173485 -0.8647095938459991 0.14816993040460003 -0.22837530717958643
+  translation 0 0 0.5
+  rotation 0.47991977458173485 -0.8647095938459991 0.14816993040460003 0
   name "ichiro"
   controller "<extern>"
   supervisor TRUE
@@ -34,8 +34,8 @@ RobotisOp2 {
         0 0 0
       ]
       fieldOfView 1.0123
-      width 320
-      height 240
+      width 160
+      height 120
       recognition Recognition {
         segmentation TRUE
       }
@@ -43,5 +43,6 @@ RobotisOp2 {
   ]
 }
 SoccerBall {
-  translation 0.3 0 0.16
+  radius 0.08
+  translation 0.5 0 0.16
 }

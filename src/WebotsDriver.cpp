@@ -226,7 +226,17 @@ void WebotsDriver::stepMotion() {
   for (auto joint : joints) {
     double position = degToRad(joint.get_position());
     adjustInit(position, joint.get_id());
-    std::cout << (int)joint.get_id() << ": " << radToDeg(position) << "\n";
+
+    double offset = joints_offset[(int)joint.get_id() - 1];
+    double lower_limit = joints_lower_limit[(int)joint.get_id() - 1];
+    double upper_limit = joints_upper_limit[(int)joint.get_id() - 1];
+
+    std::cout << (int)joint.get_id() << ": ("
+      << radToDeg(lower_limit) << ") "
+      << radToDeg(position - offset) << " ("
+      << (offset != 0 ? (offset > 0 ? "+" : "") + std::to_string(radToDeg(offset)) + ") (" : "")
+      << radToDeg(upper_limit) << ")\n";
+
     motors[joint.get_id() - 1]->setPosition(position);
   }
 
